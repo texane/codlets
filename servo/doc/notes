@@ -1,0 +1,39 @@
+salut,
+
+j ai un peu reflechi a ton probleme de gestion des
+servos et ai implemente une solution. Je pense que
+c est pas mal dans l idee.Je te joins un graphique
+ainsi que le code source.
+
+Le principe est de voir les servo comme une chaine
+d events a declencher. Pour ca, on passe d une
+representation absolue dans le temps (celle dont tu
+me parlais hier) a une representation relative sous
+forme de delta. Ces deux representations sont equivalentes,
+comme le montre le graphique.
+En construisant cette chaine de delta, on peut reloader
+un compteur avec le delta du prochain event a attendre.
+Le code du gestionnaire d interrupt devient alors tres
+simple:
+if (--current_delta == 0) // on fini le delta courant
+{
+  set_lat(); // on modifie l etat du timer
+  current_delta = next_delta; // on reload avec le delta suivant
+}
+
+La relative difficulte consiste a construire la chaine
+de delta, ce qu on fait dans le servo_move (puisque tout
+est maintenant relatif, on doit updater le necessaire).
+Cette routine est donc un peu compliquee, mais c est
+necessaire si tu veux un gestionnaire d interruption
+efficace.
+
+Le code est encore un peu crade, les variables s appellent
+pas delta et y a des operations en trop + qques details
+d implementation (notament la valeur de latb a mettre, dans
+mon exemple 0 mais ca devrait etre 1 pour toi).
+Si tu as des problemes on verra ensemble.
+
+A toute,
+
+f.
