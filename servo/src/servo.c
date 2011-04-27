@@ -113,7 +113,7 @@ void servo_move(unsigned int index, unsigned int value)
 #endif /* TODO */
 
   /* find the index where to insert _before_ such that:
-     next[TAIL_INDEX] <-> .. <-> prev_index <-> i <-> .. <-> TAIL_INDEX
+     HEAD_INDEX <-> .. <-> prev_index <-> next_index <-> .. <-> TAIL_INDEX
      sum = integrates timer values over [0 - prev_index]
    */
   sum = 0;
@@ -188,7 +188,7 @@ int main(int ac, char** av)
 {
   servo_setup();
 
-  servo_move(0, 1000);
+  servo_move(0, 10);
   servo_print();
 
   servo_move(1, 500);
@@ -200,10 +200,8 @@ int main(int ac, char** av)
   servo_move(3, 100);
   servo_print();
 
-  /* bug */
   servo_move(0, 50);
   servo_print();
-  /* bug */
 
   return 0;
 }
