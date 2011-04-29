@@ -53,15 +53,11 @@ static void push_list_elem(stl_list_t* list, stl_list_elem_t* elem)
   elem->next = NULL;
 
   if (list->head == NULL)
-  {
     list->head = elem;
-    list->tail = elem;
-  }
   else
-  {
     list->tail->next = elem;
-    list->tail = elem;
-  }
+
+  list->tail = elem;
 
   ++list->count;
 }
@@ -274,6 +270,7 @@ static int parse_facet(stl_parser_t* parser)
 #define ENDFACET_LENGTH (sizeof(ENDFACET_STRING) - 1)
   if (parse_keyword(parser, ENDFACET_STRING, ENDFACET_LENGTH) == -1)
     return -1;
+
   return skip_next_line(parser);
 }
 
@@ -345,6 +342,8 @@ int stl_read_file(const char* path, stl_list_t* list)
   if (addr == MAP_FAILED) goto on_error;
 
   init_parser(&parser, addr, st.st_size);
+  init_list(list);
+  parser.list = list;
 
   error = parse_solid(&parser);
 
@@ -434,11 +433,9 @@ int main(int ac, char** av)
   print_list(&list);
 
   count = list.count;
-  soa = malloc(9 * sizeof(double));
+  soa = malloc(count * 9 * sizeof(double));
   if (soa == NULL) goto on_error;
   stl_list_to_soa(&list, soa);
-
-  free(soa);
 
  on_error:
   if (soa != NULL) free(soa);
