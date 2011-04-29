@@ -6,26 +6,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include "stl.h"
 
-
-typedef double double_type;
-
-/* stl facet container */
-
-typedef struct stl_list_elem
-{
-  struct stl_list_elem* next;
-  double_type normal[3];
-  double_type vertices[9]; /* ordered x0, y0 ... */
-} stl_list_elem_t;
-
-
-typedef struct stl_list
-{
-  unsigned int count;
-  stl_list_elem_t* head;
-  stl_list_elem_t* tail;
-} stl_list_t;
 
 static inline void init_list(stl_list_t* list)
 {
@@ -356,7 +338,7 @@ int stl_read_file(const char* path, stl_list_t* list)
   return error;
 }
 
-void stl_list_to_soa(stl_list_t* list, double* soa)
+void stl_list_to_soa(stl_list_t* list, double_type* soa)
 {
   /* convert to a structure of arrays */
   /* do not include normals to the output */
