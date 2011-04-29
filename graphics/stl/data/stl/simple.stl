@@ -1,0 +1,16 @@
+ solid TEATEST 
+facet normal  0.986544E+00  0.100166E+00  0.129220E+00
+ outer loop
+  vertex  0.167500E+02  0.505000E+02  0.000000E+00
+  vertex  0.164599E+02  0.505000E+02  0.221480E+01
+  vertex  0.166819E+02  0.483135E+02  0.221480E+01
+ endloop
+endfacet
+facet normal  0.986495E+00  0.100374E+00  0.129434E+00
+ outer loop
+  vertex  0.166819E+02  0.483134E+02  0.221470E+01
+  vertex  0.169653E+02  0.483840E+02  0.000000E+00
+  vertex  0.167500E+02  0.505000E+02  0.000000E+00
+ endloop
+endfacet
+endsolid TEATEST
