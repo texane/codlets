@@ -1,1 +1,3 @@
-simple STL file loader
+what: simple STL file loader
+how: refer to stl.c for how to use it
+who: Fabien Le Mentec, texane@gmail.com
