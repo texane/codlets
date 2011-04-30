@@ -22,9 +22,17 @@ typedef struct stl_list
 } stl_list_t;
 
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 int stl_read_file(const char*, stl_list_t*);
 void stl_list_to_soa(stl_list_t*, double_type*);
 void stl_free_list(stl_list_t*);
+
+#if defined(__cplusplus)
+}
+#endif
 
 
 #endif /* ! STL_H_INCLUDED */

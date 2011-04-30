@@ -65,7 +65,7 @@ typedef struct stl_parser
 static inline void init_parser
 (stl_parser_t* parser, const void* data, size_t size)
 {
-  parser->data = data;
+  parser->data = (const unsigned char*)data;
   parser->size = size;
   parser->line = 0;
 }
@@ -215,7 +215,7 @@ static int parse_normal(stl_parser_t* parser)
 
   skip_whites(parser);
 
-  elem = malloc(sizeof(stl_list_elem_t));
+  elem = (stl_list_elem_t*)malloc(sizeof(stl_list_elem_t));
   if (elem == NULL) return -1;
 
   if (parse_triangle(parser, elem->normal) == -1)
