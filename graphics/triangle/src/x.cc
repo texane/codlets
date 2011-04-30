@@ -168,6 +168,26 @@ void x_loop(int (*on_event)(const struct x_event*, void*), void* ctx)
 		on_event(&x_event, ctx);
 		break;
 
+	      case SDLK_LEFT:
+		x_event.type = X_EVENT_KDOWN_LEFT;
+		on_event(&x_event, ctx);
+		break;
+
+	      case SDLK_RIGHT:
+		x_event.type = X_EVENT_KDOWN_RIGHT;
+		on_event(&x_event, ctx);
+		break;
+
+	      case SDLK_UP:
+		x_event.type = X_EVENT_KDOWN_UP;
+		on_event(&x_event, ctx);
+		break;
+
+	      case SDLK_DOWN:
+		x_event.type = X_EVENT_KDOWN_DOWN;
+		on_event(&x_event, ctx);
+		break;
+
 	      default:
 		break;
 	      }
@@ -424,6 +444,14 @@ void x_draw_line
 (int x0, int y0, int x1, int y1, const x_color_t* c)
 {
   x_draw_line(g_screen, x0, y0, x1, y1, c);
+}
+
+
+void x_draw_hline
+(int x0, int x1, int y, const x_color_t* c)
+{
+  if (x0 > x1) swap_ints(x0, x1);
+  for (; x0 < x1; ++x0) x_draw_pixel(g_screen, x0, y, c);
 }
 
 

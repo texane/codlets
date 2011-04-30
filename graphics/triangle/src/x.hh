@@ -31,6 +31,10 @@ typedef SDL_Surface x_surface_t;
 #define X_EVENT_QUIT 1
 #define X_EVENT_KUP_SPACE 2
 #define X_EVENT_KDOWN_SPACE 3
+#define X_EVENT_KDOWN_LEFT 4
+#define X_EVENT_KDOWN_RIGHT 5
+#define X_EVENT_KDOWN_UP 6
+#define X_EVENT_KDOWN_DOWN 7
 
 
 int x_initialize(unsigned int);
@@ -44,6 +48,7 @@ void x_draw_pixel(int, int, const x_color_t*);
 void x_draw_pixel(x_surface_t*, int, int, const x_color_t*);
 void x_draw_line(x_surface_t*, int, int, int, int, const x_color_t*);
 void x_draw_line(int, int, int, int, const x_color_t*);
+void x_draw_hline(int, int, int, const x_color_t*);
 void x_draw_square(int, int, int, const x_color_t*);
 void x_draw_circle(int, int, int, const x_color_t*);
 void x_draw_circle(x_surface_t*, int, int, int, const x_color_t*);

@@ -8,18 +8,20 @@ LD	:=	g++
 SDL_CFLAGS :=	$(shell pkg-config --cflags sdl)
 SDL_LFLAGS :=	$(shell pkg-config --libs sdl)
 
-CFLAGS	:=	-Wall -O3 $(SDL_CFLAGS) -I../src
+CFLAGS	:=	-Wall -O3 $(SDL_CFLAGS) -I../src -I../../stl/src
 LFLAGS	:=	$(SDL_LFLAGS) -lm
 
 RM	:=	rm -f
 
 BIN	:=	t
 
-SRCS	:=	../src/main.cc			\
+CCSRCS	:=	../src/main.cc			\
 		../src/x.cc
+CSRCS	:=	../../stl/src/stl.c
 
-OBJS	:=	$(SRCS:.cc=.o)
-
+CCOBJS	:=	$(CCSRCS:.cc=.o)
+COBJS	:=	$(CSRCS:.c=.o)
+OBJS	:=	$(CCOBJS) $(COBJS)
 
 all	:	$(BIN)
 $(BIN)	:	$(OBJS)
@@ -30,4 +32,6 @@ fclean	:	clean
 		$(RM) $(BIN)
 re	:	fclean all
 %.o	:	%.cc
+		$(CC) $(CFLAGS) -o $@ -c $<
+%.o	:	%.c
 		$(CC) $(CFLAGS) -o $@ -c $<
