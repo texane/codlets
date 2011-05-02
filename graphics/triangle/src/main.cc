@@ -19,6 +19,10 @@ static const x_color_t* yellow_color = NULL;
 
 static const x_color_t* colors[4];
 
+static unsigned int* zbuffer = NULL;
+static unsigned int zsize = 0;
+static unsigned int zwidth = 0;
+
 static void init_stuffs(void)
 {
   static const unsigned char red_rgb[] = { 0xff, 0, 0 };
@@ -35,6 +39,19 @@ static void init_stuffs(void)
   colors[1] = blu_color;
   colors[2] = green_color;
   colors[3] = yellow_color;
+
+#define ZBUFFER_INF (unsigned int)-1
+  zwidth = x_get_width();
+  zsize = x_get_width() * x_get_height();
+  zbuffer = (unsigned int*)malloc(zsize * sizeof(unsigned int));
+  for (unsigned int i = 0; i < zsize; ++i)
+    zbuffer[i] = ZBUFFER_INF;
+}
+
+
+static void fini_stuffs(void)
+{
+  free(zbuffer);
 }
 
 
@@ -49,8 +66,35 @@ typedef struct triangle
 } triangle_t;
 
 
+static void draw_hline
+(int x0, int x1, int y, const x_color_t* c, unsigned int z)
+{
+#define swap_ints(a, b)		\
+  do {				\
+    const int __tmp = a;	\
+    a = b;			\
+    b = __tmp;			\
+  } while (0)
+
+  if (x0 > x1) swap_ints(x0, x1);
+
+  unsigned int* zpos = zbuffer + y * zwidth + x0;
+  for (; x0 < x1; ++x0, ++zpos)
+  {
+    /* update only if nearest */
+    if (z >= *zpos) continue ;
+    *zpos = z;
+    x_draw_pixel(x0, y, c);
+  }
+}
+
 static void fill_top
-(triangle_t* t, const unsigned int* sorted, const x_color_t* c)
+(
+ triangle_t* t,
+ const unsigned int* sorted,
+ const x_color_t* c,
+ unsigned int z
+)
 {
   int scany;
   double tx, ty;
@@ -93,14 +137,19 @@ static void fill_top
   /* iterate over y */
   for (; scany <= (int)ty; ++scany)
   {
-    x_draw_hline((int)ceil(lx), (int)ceil(rx), scany, c);
+    draw_hline((int)ceil(lx), (int)ceil(rx), scany, c, z);
     lx += la;
     rx += ra;
   }
 }
 
 static void fill_down
-(const triangle_t* t, const unsigned int* sorted, const x_color_t* c)
+(
+ const triangle_t* t,
+ const unsigned int* sorted,
+ const x_color_t* c,
+ unsigned int z
+)
 {
   double dx, dy;
   double lx, rx;
@@ -126,7 +175,7 @@ static void fill_down
   /* iterate over y */
   for (; scany >= (int)dy; --scany)
   {
-    x_draw_hline((int)ceil(lx), (int)ceil(rx), scany, c);
+    draw_hline((int)ceil(lx), (int)ceil(rx), scany, c, z);
     lx -= la;
     rx -= ra;
   }
@@ -183,7 +232,8 @@ static void sort_vertices(const triangle_t* t, unsigned int* sorted)
   }
 }
 
-static void triangle_fill(triangle_t* t, const x_color_t* c)
+static void triangle_fill
+(triangle_t* t, const x_color_t* c, unsigned int depth)
 {
   unsigned int sorted[3];
 
@@ -214,8 +264,8 @@ static void triangle_fill(triangle_t* t, const x_color_t* c)
   sort_vertices(t, sorted);
 
   if (t->dots[sorted[0]].y != t->dots[sorted[1]].y)
-    fill_top(t, sorted, c);
-  fill_down(t, sorted, c);
+    fill_top(t, sorted, c, depth);
+  fill_down(t, sorted, c, depth);
 }
 
 static void triangle_wire(const triangle_t* t, const x_color_t* c)
@@ -339,7 +389,7 @@ static void view_project_triangles
     }
 
     /* draw the triangle */
-    triangle_fill(&tri2, colors[count & 3]);
+    triangle_fill(&tri2, colors[count & 3], tri->points[0].z);
   }
 }
 
@@ -443,7 +493,8 @@ static void redraw(void*)
   if (tri == NULL)
   {
     stl_list_t list;
-    if (stl_read_file("../../stl/data/stl/2_8.stl", &list) == 0)
+    if (stl_read_ascii_file("../../stl/data/stl/magnolia.stl", &list) == 0)
+    // if (stl_read_ascii_file("/tmp/o.stl", &list) == 0)
     {
       /* convert to triangle3_t array */
       stl_list_elem_t* pos;
@@ -468,6 +519,10 @@ static void redraw(void*)
     printf("read %u\n", n);
   }
 #endif /* stl file */
+
+  /* reset zbuffer */
+  for (unsigned int i = 0; i < zsize; ++i)
+    zbuffer[i] = ZBUFFER_INF;
 
   /* project to screen */
   view_set_defaults(&view);
