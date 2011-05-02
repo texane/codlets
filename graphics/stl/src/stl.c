@@ -28,6 +28,8 @@ static void free_list(stl_list_t* list)
     pos = pos->next;
     free(tmp);
   }
+
+  init_list(list);
 }
 
 static void push_list_elem(stl_list_t* list, stl_list_elem_t* elem)
@@ -302,17 +304,11 @@ static int parse_solid(stl_parser_t* parser)
   return parse_keyword(parser, ENDSOLID_STRING, ENDSOLID_LENGTH);
 }
 
-
-/* exported */
-
-int stl_read_file(const char* path, stl_list_t* list)
+static int map_file
+(const char* path, void** addr, size_t* size)
 {
-  /* assume ascii format */
-
-  int fd;
   int error = -1;
-  void* addr;
-  stl_parser_t parser;
+  int fd;
   struct stat st;
 
   fd = open(path, O_RDONLY);
@@ -320,21 +316,137 @@ int stl_read_file(const char* path, stl_list_t* list)
 
   if (fstat(fd, &st) == -1) goto on_error;
 
-  addr = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
-  if (addr == MAP_FAILED) goto on_error;
+  *addr = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+  if (*addr == MAP_FAILED) goto on_error;
 
-  init_parser(&parser, addr, st.st_size);
-  init_list(list);
-  parser.list = list;
-
-  error = parse_solid(&parser);
-
-  munmap(addr, st.st_size);
-
+  *size = st.st_size;
   error = 0;
 
  on_error:
   close(fd);
+  return error;
+}
+
+static inline void unmap_file(void* addr, size_t size)
+{ munmap(addr, size); }
+
+
+/* exported */
+
+int stl_read_ascii_file(const char* path, stl_list_t* list)
+{
+  /* assume ascii format */
+
+  int error = -1;
+  void* addr;
+  size_t size;
+  stl_parser_t parser;
+
+  if (map_file(path, &addr, &size) == -1)
+    return -1;
+
+  init_parser(&parser, addr, size);
+  init_list(list);
+  parser.list = list;
+
+  error = parse_solid(&parser);
+  unmap_file(addr, size);
+
+  return error;
+}
+
+
+/* read a binary file */
+
+static inline uint16_t read_uint16_le(const void* p)
+{ return *(const uint16_t*)p; }
+
+static inline uint32_t read_uint32_le(const void* p)
+{ return *(const uint32_t*)p; }
+
+static inline float read_real32_le(const void* p)
+{ return *(const float*)p; }
+
+static void read_vertex(uintptr_t p, double_type* v)
+{
+#define SIZEOF_REAL32 4
+  v[0] = read_real32_le((const void*)(p + 0 * SIZEOF_REAL32));
+  v[1] = read_real32_le((const void*)(p + 1 * SIZEOF_REAL32));
+  v[2] = read_real32_le((const void*)(p + 2 * SIZEOF_REAL32));
+}
+
+int stl_read_binary_file(const char* path, stl_list_t* list)
+{
+  /* assume binary format */
+
+  /* this is a temporary version of the routine,
+     the final one should not work on a list to
+     avoid all the allocations.
+   */
+
+  int error = -1;
+  uintptr_t addr;
+  size_t size;
+  unsigned int j;
+  uint32_t i;
+  uint32_t count;
+  stl_list_elem_t* elem;
+
+  init_list(list);
+
+  if (map_file(path, (void**)&addr, &size) == -1)
+    return -1;
+
+  /* skip the 80 bytes header */
+  if (size < 80) goto on_error;
+  addr += 80;
+  size -= 80;
+
+  /* triangle count */
+  count = read_uint32_le((const void*)addr);
+  addr += sizeof(uint32_t);
+  size -= sizeof(uint32_t);
+
+  /* foreach triangle */
+  for (i = 0; i < count; ++i)
+  {
+    if (size < (4 * 3 * SIZEOF_REAL32 + sizeof(uint16_t)))
+    {
+      /* unexpected eof. not an error. */
+      break ;
+    }
+
+    elem = (stl_list_elem_t*)malloc(sizeof(stl_list_elem_t));
+    if (elem == NULL) goto on_error;
+
+    /* read normal */
+    read_vertex(addr, elem->normal);
+#define SIZEOF_VERTEX (3 * SIZEOF_REAL32)
+    addr += SIZEOF_VERTEX;
+
+    /* read vertices */
+    for (j = 0; j < 3; ++j)
+    {
+      read_vertex(addr, elem->vertices + j);
+      addr += SIZEOF_VERTEX;
+      size -= SIZEOF_VERTEX;
+    }
+
+    /* skip attribute, assumed 0 */
+    addr += sizeof(uint16_t);
+    size -= sizeof(uint16_t);
+
+    push_list_elem(list, elem);
+  }
+
+  /* success */
+  error = 0;
+
+ on_error:
+  unmap_file((void*)addr, size);
+
+  if (error) free_list(list);
+
   return error;
 }
 
@@ -384,9 +496,11 @@ void print_list(const stl_list_t* list)
   const stl_list_elem_t* pos;
   unsigned int i;
 
+  printf("solid UNAMED\n");
+
   for (pos = list->head; pos != NULL; pos = pos->next)
   {
-    printf("facet normal: ");
+    printf("facet normal ");
     print_triangle(pos->normal);
     printf("\n");
 
@@ -401,6 +515,8 @@ void print_list(const stl_list_t* list)
     printf("endloop\n");
     printf("endfacet\n");
   }
+
+  printf("endsolid UNAMED\n");
 }
 
 int main(int ac, char** av)
@@ -409,7 +525,7 @@ int main(int ac, char** av)
   unsigned int count;
   double* soa = NULL;
 
-  if (stl_read_file("../data/stl/simple.stl", &list))
+  if (stl_read_binary_file("../data/binary/porsche.stl", &list))
     return -1;
 
   print_list(&list);

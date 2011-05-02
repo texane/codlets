@@ -26,7 +26,8 @@ typedef struct stl_list
 extern "C" {
 #endif
 
-int stl_read_file(const char*, stl_list_t*);
+int stl_read_ascii_file(const char*, stl_list_t*);
+int stl_read_binary_file(const char*, stl_list_t*);
 void stl_list_to_soa(stl_list_t*, double_type*);
 void stl_free_list(stl_list_t*);
 
