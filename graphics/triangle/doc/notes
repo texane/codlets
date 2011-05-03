@@ -1,0 +1,22 @@
+. todo
+ . implement texturing
+  . the color of a pixel is given by a texture, not a rgb
+ . implement z buffering
+  . z values must be linearly interpolated
+  . z must be stored in fixed point format
+   . refer to http://en.wikipedia.org/wiki/Z-buffering
+   . http://www.siggraph.org/education/materials/HyperGraph/scanline/visibility/zbuffer.htm
+   . interpolation
+ . implement screen coordinate mapping
+
+. z buffer algorithm
+ . http://www.codermind.com/articles/Depth-buffer-tutorial.html
+
+. opengl
+ . buffers
+  . color buffer: the pixel color buffer (ie. glClearColor)
+  . z buffer: depth of the pixels (ie. glClearDepth)
+
+. references
+ . http://www.sdltutorials.com/sdl-opengl-tutorial-basics
+ . http://www-users.mat.uni.torun.pl/~wrona/3d_tutor/tri_fillers.html

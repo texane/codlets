@@ -349,6 +349,29 @@ static inline void view_set_camera_angle
 
 static const x_color_t* get_lit_color_at(unsigned int);
 
+static double interpolate_zdepth(const triangle3_t* tri)
+{
+#define swap_uints(a, b)		\
+  do {					\
+    const unsigned int __tmp = a;	\
+    a = b;				\
+    b = __tmp;				\
+  } while (0)
+
+  unsigned int sorted[3] = { 0, 1, 2 };
+
+  unsigned int max = 0;
+
+  if (tri->points[0].z < tri->points[1].z) max = 1;
+  if (tri->points[max].z < tri->points[2].z) max = 2;
+  if (max != 0) swap_uints(sorted[0], sorted[max]);
+
+  if (tri->points[sorted[1]].z < tri->points[sorted[2]].z)
+    swap_uints(sorted[1], sorted[2]);
+
+  return (3 * tri->points[sorted[2]].z + tri->points[sorted[0]].z) / 2;
+}
+
 static void view_project_triangles
 (const view_t* view, const triangle3_t* tri, unsigned int count)
 {
@@ -394,7 +417,7 @@ static void view_project_triangles
 
     /* draw the triangle */
     lit_color = get_lit_color_at(j);
-    triangle_fill(&tri2, lit_color, tri->points[0].z);
+    triangle_fill(&tri2, lit_color, interpolate_zdepth(tri));
   }
 }
 
@@ -405,6 +428,10 @@ static inline double radians(double);
 
 static vertex3_t light_dir;
 static double* light_intens = NULL;
+
+/* setup once */
+static double light_alpha; /* z axis */
+static double light_beta; /* y axis */
 
 static const x_color_t* get_lit_color(double intens)
 {
@@ -440,16 +467,15 @@ static void compute_light_intensity
 
   if (light_intens == NULL)
   {
-    /* setup once */
-    static const double light_alpha = radians(50); /* z axis */
-    static const double light_beta = radians(200); /* y axis */
-
-    light_dir.x = cos(light_beta) * cos(light_alpha);
-    light_dir.y = sin(light_alpha);
-    light_dir.z = -1 * sin(light_beta) * cos(light_alpha);
-
+    light_alpha = radians(50); /* z axis */
+    light_beta = radians(200); /* y axis */
     light_intens = (double*)malloc(count * sizeof(double));
   }
+
+  /* recompute light vector */
+  light_dir.x = cos(light_beta) * cos(light_alpha);
+  light_dir.y = sin(light_alpha);
+  light_dir.z = -1 * sin(light_beta) * cos(light_alpha);
 
   for (i = 0; i < count; ++i, ++pos)
   {
@@ -504,13 +530,13 @@ static inline triangle3_t make_tri3
 }
 
 
-static double cam_x = -200;
-static double cam_y = -200;
+static double cam_x = -100;
+static double cam_y = 100;
 static double cam_z = -200;
 
 static double view_alpha = 0;
 static double view_beta = 0;
-static double view_gamma = 0;
+static double view_gamma = 180;
 
 static void redraw(void*)
 {
@@ -571,8 +597,9 @@ static void redraw(void*)
   if (tri == NULL)
   {
     stl_list_t list;
-    /* if (stl_read_binary_file("../../stl/data/binary/knot.stl", &list) == 0) */
-    if (stl_read_ascii_file("../../stl/data/stl/bottle.stl", &list) == 0)
+    /* if (stl_read_binary_file("../../stl/data/stl_binary/ship.stl", &list) == 0) */
+    /* if (stl_read_binary_file("../../stl/data/stl_binary/echinoderm1-george-hart.stl", &list) == 0) */
+    if (stl_read_ascii_file("../../stl/data/stl/sphere.stl", &list) == 0)
     {
       /* convert to triangle3_t array */
       stl_list_elem_t* pos;
@@ -612,7 +639,7 @@ static void redraw(void*)
   /* project to screen */
   view_set_defaults(&view);
   view_set_camera_pos(&view, cam_x, cam_y, cam_z);
-  view_set_viewer_depth(&view, 200);
+  view_set_viewer_depth(&view, 100);
   view_set_camera_angle(&view, view_alpha, view_beta, view_gamma);
   view_project_triangles(&view, tri, n);
 }
@@ -626,25 +653,29 @@ static int on_event(const struct x_event* ev, void* arg)
   case X_EVENT_KDOWN_SPACE:
     /* view_alpha += radians(3); */
     /* view_beta += radians(3); */
-    view_gamma += radians(3);
+    view_gamma += radians(10);
     break;
 
   case X_EVENT_KDOWN_LEFT:
-    cam_x -= 10;
+    light_beta += radians(5);
+    /* cam_x -= 10; */
     break;
 
   case X_EVENT_KDOWN_RIGHT:
-    cam_x += 10;
+    light_beta -= radians(5);
+    /* cam_x += 10; */
     break;
 
   case X_EVENT_KDOWN_UP:
-    cam_z += 1;
-/*     cam_y += 1;  */
+    /* cam_z += 1; */
+    /* cam_y += 1;  */
+    light_alpha += radians(5);
     break;
 
   case X_EVENT_KDOWN_DOWN:
-    cam_z -= 1;
-/*     cam_y -= 1;  */
+    /* cam_z -= 1; */
+    /* cam_y -= 1;  */
+    light_alpha -= radians(5);
     break;
 
   case X_EVENT_TICK:

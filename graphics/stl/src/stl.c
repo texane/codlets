@@ -525,7 +525,7 @@ int main(int ac, char** av)
   unsigned int count;
   double* soa = NULL;
 
-  if (stl_read_binary_file("../data/binary/porsche.stl", &list))
+  if (stl_read_binary_file("../data/stl_binary/ship.stl", &list))
     return -1;
 
   print_list(&list);
