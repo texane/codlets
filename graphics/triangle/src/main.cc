@@ -16,6 +16,7 @@ static const x_color_t* red_color = NULL;
 static const x_color_t* blu_color = NULL;
 static const x_color_t* green_color = NULL;
 static const x_color_t* yellow_color = NULL;
+static const x_color_t* white_color = NULL;
 
 static const x_color_t* colors[4];
 
@@ -29,11 +30,13 @@ static void init_stuffs(void)
   static const unsigned char blu_rgb[] = { 0, 0, 0xff };
   static const unsigned char green_rgb[] = { 0, 0xff, 0x00 };
   static const unsigned char yellow_rgb[] = { 0xff, 0xff, 0x00 };
+  static const unsigned char white_rgb[] = { 0xff, 0xff, 0xff };
 
   x_alloc_color(red_rgb, &red_color);
   x_alloc_color(blu_rgb, &blu_color);
   x_alloc_color(green_rgb, &green_color);
   x_alloc_color(yellow_rgb, &yellow_color);
+  x_alloc_color(white_rgb, &white_color);
 
   colors[0] = red_color;
   colors[1] = blu_color;
@@ -257,9 +260,6 @@ static void triangle_fill
     if (i != 3) return ;
   }
 
-  /* printf("ok: %d %d %d\n", t->dots[0].x, t->dots[1].x, t->dots[2].x); */
-  /* printf("ok: %d %d %d\n", t->dots[0].y, t->dots[1].y, t->dots[2].y); */
-
   /* top vertex index */
   sort_vertices(t, sorted);
 
@@ -288,6 +288,7 @@ typedef struct vertex3
 typedef struct triangle3
 {
   vertex3_t points[3];
+  vertex3_t normal;
 } triangle3_t;
 
 
@@ -348,6 +349,8 @@ static inline void view_set_camera_angle
   view->gamma = gamma;
 }
 
+static const x_color_t* get_lit_color_at(unsigned int);
+
 static void view_project_triangles
 (const view_t* view, const triangle3_t* tri, unsigned int count)
 {
@@ -364,8 +367,11 @@ static void view_project_triangles
   double diffx, diffy, diffz;
   double dx, dy, dz;
   unsigned int i;
+  unsigned int j = 0;
 
-  for (; count; ++tri, --count)
+  const x_color_t* lit_color;
+
+  for (; count; ++tri, --count, ++j)
   {
     for (i = 0; i < 3; ++i)
     {
@@ -389,7 +395,94 @@ static void view_project_triangles
     }
 
     /* draw the triangle */
-    triangle_fill(&tri2, colors[count & 3], tri->points[0].z);
+    lit_color = get_lit_color_at(j);
+    triangle_fill(&tri2, lit_color, tri->points[0].z);
+  }
+}
+
+
+/* ambiant lighting */
+
+static inline double radians(double);
+
+static vertex3_t light_dir;
+static double* light_intens = NULL;
+
+static const x_color_t* get_lit_color(double intens)
+{
+  const int value = (int)ceil(255. * intens);
+  unsigned char rgb[3];
+  rgb[0] = value;
+  rgb[1] = value;
+  rgb[2] = value;
+  x_remap_color(rgb, white_color);
+  return white_color;
+}
+
+static const x_color_t* get_lit_color_at(unsigned int i)
+{
+  return get_lit_color(light_intens[i]);
+}
+
+static double compute_norm3(const vertex3_t* v)
+{
+  return sqrt
+  (
+   v->x * v->x +
+   v->y * v->y +
+   v->z * v->z
+  );
+}
+
+static void compute_light_intensity
+(const triangle3_t* tri, unsigned int count)
+{
+  const triangle3_t* pos = tri;
+  unsigned int i;
+
+  if (light_intens == NULL)
+  {
+    /* setup once */
+#if 0
+    light_dir.x = -0.5;
+    light_dir.y = -0.5;
+    light_dir.z = 0.5;
+#else
+    static const double light_alpha = radians(50); /* z axis */
+    static const double light_beta = radians(200); /* y axis */
+
+#if 0
+    light_dir.x = cos(light_alpha);
+    light_dir.y = sin(light_alpha);
+    light_dir.z = sin(light_beta) * fabs(cos(light_alpha));
+#else
+    light_dir.x = cos(light_beta) * cos(light_alpha);
+    light_dir.y = sin(light_alpha);
+    light_dir.z = -1 * sin(light_beta) * cos(light_alpha);
+#endif
+
+#endif
+
+    light_intens = (double*)malloc(count * sizeof(double));
+  }
+
+  for (i = 0; i < count; ++i, ++pos)
+  {
+    /* compute the cos(a) between normal and light vector */
+    const double cosa =
+      pos->normal.x * light_dir.x +
+      pos->normal.y * light_dir.y +
+      pos->normal.z * light_dir.z;
+
+    /* compute the dot product between normal and light vector */
+    light_intens[i] = 0.5 + cosa / 2;
+
+    if (fabs(cosa) > 1)
+    {
+      printf("invalid: %lf\n", compute_norm3(&light_dir));
+      if (cosa > 1) light_intens[i] = 1;
+      else light_intens[i] = -1;
+    }
   }
 }
 
@@ -493,8 +586,8 @@ static void redraw(void*)
   if (tri == NULL)
   {
     stl_list_t list;
-    if (stl_read_ascii_file("../../stl/data/stl/magnolia.stl", &list) == 0)
-    // if (stl_read_ascii_file("/tmp/o.stl", &list) == 0)
+    /* if (stl_read_binary_file("../../stl/data/binary/knot.stl", &list) == 0) */
+    if (stl_read_ascii_file("../../stl/data/stl/bottle.stl", &list) == 0)
     {
       /* convert to triangle3_t array */
       stl_list_elem_t* pos;
@@ -511,6 +604,10 @@ static void redraw(void*)
 	  tri[n].points[i].y = pos->vertices[i * 3 + 1];
 	  tri[n].points[i].z = pos->vertices[i * 3 + 2];
 	}
+
+	tri[n].normal.x = pos->normal[0];
+	tri[n].normal.y = pos->normal[1];
+	tri[n].normal.z = pos->normal[2];
       }
 
       stl_free_list(&list);
@@ -523,6 +620,9 @@ static void redraw(void*)
   /* reset zbuffer */
   for (unsigned int i = 0; i < zsize; ++i)
     zbuffer[i] = ZBUFFER_INF;
+
+  /* lighting */
+  compute_light_intensity(tri, n);
 
   /* project to screen */
   view_set_defaults(&view);
