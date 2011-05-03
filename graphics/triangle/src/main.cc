@@ -47,8 +47,6 @@ static void init_stuffs(void)
   zwidth = x_get_width();
   zsize = x_get_width() * x_get_height();
   zbuffer = (unsigned int*)malloc(zsize * sizeof(unsigned int));
-  for (unsigned int i = 0; i < zsize; ++i)
-    zbuffer[i] = ZBUFFER_INF;
 }
 
 
@@ -443,25 +441,12 @@ static void compute_light_intensity
   if (light_intens == NULL)
   {
     /* setup once */
-#if 0
-    light_dir.x = -0.5;
-    light_dir.y = -0.5;
-    light_dir.z = 0.5;
-#else
     static const double light_alpha = radians(50); /* z axis */
     static const double light_beta = radians(200); /* y axis */
 
-#if 0
-    light_dir.x = cos(light_alpha);
-    light_dir.y = sin(light_alpha);
-    light_dir.z = sin(light_beta) * fabs(cos(light_alpha));
-#else
     light_dir.x = cos(light_beta) * cos(light_alpha);
     light_dir.y = sin(light_alpha);
     light_dir.z = -1 * sin(light_beta) * cos(light_alpha);
-#endif
-
-#endif
 
     light_intens = (double*)malloc(count * sizeof(double));
   }
