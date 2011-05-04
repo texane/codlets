@@ -403,6 +403,7 @@ int stl_read_binary_file(const char* path, stl_list_t* list)
   size -= 80;
 
   /* triangle count */
+  if (size < sizeof(uint32_t)) goto on_error;
   count = read_uint32_le((const void*)addr);
   addr += sizeof(uint32_t);
   size -= sizeof(uint32_t);
@@ -410,7 +411,8 @@ int stl_read_binary_file(const char* path, stl_list_t* list)
   /* foreach triangle */
   for (i = 0; i < count; ++i)
   {
-    if (size < (4 * 3 * SIZEOF_REAL32 + sizeof(uint16_t)))
+#define SIZEOF_VERTEX (3 * SIZEOF_REAL32)
+    if (size < (4 * SIZEOF_VERTEX + sizeof(uint16_t)))
     {
       /* unexpected eof. not an error. */
       break ;
@@ -421,13 +423,13 @@ int stl_read_binary_file(const char* path, stl_list_t* list)
 
     /* read normal */
     read_vertex(addr, elem->normal);
-#define SIZEOF_VERTEX (3 * SIZEOF_REAL32)
     addr += SIZEOF_VERTEX;
+    size -= SIZEOF_VERTEX;
 
     /* read vertices */
     for (j = 0; j < 3; ++j)
     {
-      read_vertex(addr, elem->vertices + j);
+      read_vertex(addr, elem->vertices + j * 3);
       addr += SIZEOF_VERTEX;
       size -= SIZEOF_VERTEX;
     }
@@ -488,7 +490,7 @@ void stl_free_list(stl_list_t* list)
 
 static inline void print_triangle(const double_type* v)
 {
-  printf("%lf %lf %lf", v[0], v[1], v[2]);
+  printf("%E %E %E", v[0], v[1], v[2]);
 }
 
 void print_list(const stl_list_t* list)
@@ -500,20 +502,20 @@ void print_list(const stl_list_t* list)
 
   for (pos = list->head; pos != NULL; pos = pos->next)
   {
-    printf("facet normal ");
+    printf("  facet normal ");
     print_triangle(pos->normal);
     printf("\n");
 
-    printf("outer loop\n");
+    printf("    outer loop\n");
     for (i = 0; i < 3; ++i)
     {
-      printf("vertex ");
+      printf("      vertex ");
       print_triangle(pos->vertices + i * 3);
       printf("\n");
     }
 
-    printf("endloop\n");
-    printf("endfacet\n");
+    printf("    endloop\n");
+    printf("  endfacet\n");
   }
 
   printf("endsolid UNAMED\n");
@@ -525,7 +527,10 @@ int main(int ac, char** av)
   unsigned int count;
   double* soa = NULL;
 
-  if (stl_read_binary_file("../data/stl_binary/ship.stl", &list))
+/*   if (stl_read_binary_file("../data/stl_binary/knot.stl", &list)) */
+/*     return -1; */
+
+  if (stl_read_binary_file("/tmp/tube.stl", &list))
     return -1;
 
   print_list(&list);
