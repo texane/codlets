@@ -67,16 +67,16 @@ int main(int ac, char** av)
   unsigned int iter;
   struct timeval sta, sto, dif;
 
-  vals[0] = rand() % 100;
-  vals[1] = rand() % 100;
-  vals[2] = rand() % 100;
+  vals[0] = 200 + rand() % 100;
+  vals[1] = 100 + rand() % 100;
+  vals[2] = 300 + rand() % 100;
 
   gettimeofday(&sta, NULL);
 
   for (iter = 0; iter < 200000; ++iter)
   {
-    sort3i(vals, keys);
-    /* sort3i_orig(vals, keys); */
+    /* sort3i(vals, keys); */
+    sort3i_orig(vals, keys);
     force_use(keys);
     /* printf("%d %d %d -> ", vals[0], vals[1], vals[2]); */
     /* printf("%d %d %d\n", vals[keys[0]], vals[keys[1]], vals[keys[2]]); */
