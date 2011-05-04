@@ -320,11 +320,13 @@ static const x_color_t* get_lit_color_at(unsigned int);
 
 static double interpolate_zdepth(const triangle3_t* tri)
 {
-#define swap_uints(a, b)		\
-  do {					\
-    const unsigned int __tmp = a;	\
-    a = b;				\
-    b = __tmp;				\
+  unsigned int tmp;
+
+#define swap_uints(a, b)	\
+  do {				\
+    tmp = a;			\
+    a = b;			\
+    b = tmp;			\
   } while (0)
 
   unsigned int sorted[3] = { 0, 1, 2 };
@@ -333,24 +335,24 @@ static double interpolate_zdepth(const triangle3_t* tri)
 
   if (tri->points[0].z < tri->points[1].z) max = 1;
   if (tri->points[max].z < tri->points[2].z) max = 2;
-  if (max != 0) swap_uints(sorted[0], sorted[max]);
+  swap_uints(sorted[0], sorted[max]);
 
   if (tri->points[sorted[1]].z < tri->points[sorted[2]].z)
     swap_uints(sorted[1], sorted[2]);
 
-  return (3 * tri->points[sorted[2]].z + tri->points[sorted[0]].z) / 2;
+  return (3 * tri->points[sorted[0]].z + tri->points[sorted[2]].z) / 2;
 }
 
 static void view_project_triangles
 (const view_t* view, const triangle3_t* tri, unsigned int count)
 {
-  const double cosa = cos(view->alpha);
-  const double cosb = cos(view->beta);
-  const double cosy = cos(view->gamma);
+  const double cosx = cos(view->alpha);
+  const double cosy = cos(view->beta);
+  const double cosz = cos(view->gamma);
 
-  const double sina = sin(view->alpha);
-  const double sinb = sin(view->beta);
-  const double siny = sin(view->gamma);
+  const double sinx = sin(view->alpha);
+  const double siny = sin(view->beta);
+  const double sinz = sin(view->gamma);
 
   triangle_t tri2;
   double fu, bar;
@@ -370,18 +372,22 @@ static void view_project_triangles
       diffz = tri->points[i].z - view->cz;
 
       /* apply view transformation */
-      fu = cosb * diffz + sinb * (siny * diffy + cosy * diffx);
-      bar = cosy * diffy - siny * diffx;
+      fu = cosy * diffz + siny * (sinz * diffy + cosz * diffx);
+      bar = cosz * diffy - sinz * diffx;
 
-      dx = cosb * (siny * diffy + cosy * diffx) - sinb * diffz;
-      dy = sina * fu + cosa * bar;
-      dz = cosa * fu - sina * bar;
+      dx = cosy * (sinz * diffy + cosz * diffx) - siny * diffz;
+      dy = sinx * fu + cosx * bar;
+      dz = cosx * fu - sinx * bar;
 
       /* printf("%lf %lf %lf\n", dx, dy, dz); */
 
       /* project object to 2d surface */
       tri2.dots[i].x = (dx - view->vx) * (view->vz / dz);
       tri2.dots[i].y = (dy - view->vy) * (view->vz / dz);
+
+      /* screen transformation */
+      tri2.dots[i].x = 250 + tri2.dots[i].x / 2;
+      tri2.dots[i].y = 250 + tri2.dots[i].y / 2;
     }
 
     /* draw the triangle */
@@ -499,13 +505,13 @@ static inline triangle3_t make_tri3
 }
 
 
-static double cam_x = -100;
-static double cam_y = 100;
-static double cam_z = -200;
+static double cam_x = 0;
+static double cam_y = 0;
+static double cam_z = 2;
 
 static double view_alpha = 0;
 static double view_beta = 0;
-static double view_gamma = 180;
+static double view_gamma = 0;
 
 static void redraw(void*)
 {
@@ -568,7 +574,8 @@ static void redraw(void*)
     stl_list_t list;
     /* if (stl_read_binary_file("../../stl/data/stl_binary/ship.stl", &list) == 0) */
     /* if (stl_read_binary_file("../../stl/data/stl_binary/echinoderm1-george-hart.stl", &list) == 0) */
-    if (stl_read_ascii_file("../../stl/data/stl/sphere.stl", &list) == 0)
+    /* if (stl_read_ascii_file("../../stl/data/stl/bottle.stl", &list) == 0) */
+    if (stl_read_binary_file("../../stl/data/stl_binary/tube.stl", &list) == 0)
     {
       /* convert to triangle3_t array */
       stl_list_elem_t* pos;
