@@ -182,55 +182,24 @@ static void fill_down
   }
 }
 
-static void sort_vertices(const triangle_t* t, unsigned int* sorted)
+static void sort_vertices(const triangle_t* t, unsigned int* k)
 {
   /* sort triangle vertices by y */
 
-  if (t->dots[0].y < t->dots[1].y) /* 0 < 1 */
-  {
-    sorted[2] = 0;
+  k[0] = 0;
+  k[1] = 1;
+  k[2] = 2;
 
-    if (t->dots[1].y > t->dots[2].y) /* 1 > (0, 2) */
-    {
-      sorted[0] = 1;
-      sorted[1] = 2;
+#define swap(__a, __b)				\
+  do {						\
+    const unsigned int __tmp = __a;		\
+    __a = __b;					\
+    __b = __tmp;				\
+  } while (0)
 
-      if (t->dots[0].y > t->dots[2].y) /* 1 > 0 > 2 */
-      {
-	sorted[1] = 0;
-	sorted[2] = 2;
-      }
-    }
-    else /* 2 > 1 > 0 */
-    {
-      sorted[0] = 2;
-      sorted[1] = 1;
-    }
-  }
-  else if (t->dots[0].y < t->dots[2].y) /* 0 < (1,2) */
-  {
-    sorted[2] = 0;
-    sorted[0] = 1;
-    sorted[1] = 2;
-
-    if (t->dots[2].y > t->dots[1].y)
-    {
-      sorted[0] = 2;
-      sorted[1] = 1;
-    }
-  }
-  else /* 0 > (1,2) */
-  {
-    sorted[0] = 0;
-    sorted[1] = 2;
-    sorted[2] = 1;
-
-    if (t->dots[1].y > t->dots[2].y)
-    {
-      sorted[1] = 1;
-      sorted[2] = 2;
-    }
-  }
+  if (t->dots[k[1]].y > t->dots[k[0]].y) swap(k[0], k[1]);
+  if (t->dots[k[2]].y > t->dots[k[0]].y) swap(k[0], k[2]);
+  if (t->dots[k[2]].y > t->dots[k[1]].y) swap(k[1], k[2]);
 }
 
 static void triangle_fill
