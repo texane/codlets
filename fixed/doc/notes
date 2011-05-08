@@ -1,0 +1,6 @@
+. taylor expansion
+ . extrapolates a point (a + h, f(a + h)) from (a, f(a)) using derivatives of f
+
+-- references
+. http://www.console-dev.de/2009/07/06/sine-approximation-with-fixed-point-math/
+. http://www.coranac.com/2009/07/sines/
