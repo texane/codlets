@@ -11,15 +11,18 @@ class SimulationViewer : public QGLViewer
   Q_OBJECT
 
 public:
-  SimulationViewer(void (*onStep)(void)) : onStep_(onStep) {}
+  SimulationViewer(void (*onStep)(SimulationViewer*))
+    : onStep_(onStep) {}
+
   ~SimulationViewer();
 
   int execute();
 
-  static SimulationViewer* makeSimulationViewer(int, char**, void (*)(void));
+  static SimulationViewer* makeSimulationViewer
+  (int, char**, void (*)(SimulationViewer*));
 
 public slots:
-  virtual void onTimer() { onStep_(); }
+  virtual void onTimer() { onStep_(this); }
 
 protected:
   virtual void draw();
@@ -32,7 +35,7 @@ private:
   qglviewer::Vec orig;
   qglviewer::Vec dir;
   qglviewer::Vec selectedPoint;
-  void (*onStep_)(void);
+  void (*onStep_)(SimulationViewer*);
   QTimer* timer_;
   QApplication* app_;
 };

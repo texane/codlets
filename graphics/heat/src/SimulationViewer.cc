@@ -114,7 +114,7 @@ QString SimulationViewer::helpString() const
 
 
 SimulationViewer* SimulationViewer::makeSimulationViewer
-(int ac, char** av, void (*onStep)(void))
+(int ac, char** av, void (*onStep)(SimulationViewer*))
 {
   QApplication* const app = new QApplication(ac, av);
   SimulationViewer* const viewer = new SimulationViewer(onStep);
