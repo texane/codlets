@@ -5,21 +5,12 @@
 
 // static configuration
 #define CONFIG_CUBE_DIM 10
-#define CONFIG_HEAT_K 0.1
-#define CONFIG_SIMU_DT 100
+#define CONFIG_SIM_DT 0.1 // seconds
+#define CONFIG_SIM_K 0.1
 
 
-// globals
-
+// cubes
 static double* cubes[2];
-
-static inline void swap_cubes(void)
-{
-  double* const tmp = cubes[0];
-  cubes[0] = cubes[1];
-  cubes[1] = tmp;
-}
-
 
 // generate a cube where point are equally spaced
 
@@ -34,22 +25,50 @@ static void zero_cube(double* cube, unsigned int dim)
     *cube = 0;
 }
 
+static inline unsigned int to_index
+(unsigned int i, unsigned int j, unsigned int k, unsigned int dim)
+{
+  return
+}
+
 static void diffuse_heat
 (
- const double* scube, double* dcube, unsigned int dim,
- unsigned int k, unsigned int dt
+ const double* u, double* uu, unsigned int dim,
+ double k, double dt, double dx
 )
 {
   // scube the source cube
   // dcube the dest cube
   // k the heat propagation factor
   // dt the time step
+
+  const unsigned int ddim = dim * dim;
+  const double xx = x * x;
+  const double k_dt_xx = k / dt * xx;
+  const double c0 = 1 - 6 * k_dt_xx;
+  const double c1 = k_dt_xx;
+
+  unsigned int pos = 0;
+  for (unsigned int i = 0; i < dim; ++i)
+    for (unsigned int j = 0; j < dim; ++j)
+      for (unsigned int k = 0; k < dim; ++k, ++pos)
+      {
+	u[pos] =
+	  c0 * u[pos] + c1 *
+	  (u[pos - dim] + u[pos + 1] + u[pos + dim] + u[pos - 1] + u[pos - ddim] + u[pos + ddim]);
+      }
 }
 
 static void step(SimulationViewer* viewer)
 {
-  diffuse_heat();
-  swap_cubes();
+  // diffuse heat
+  diffuse_heat
+    (cubes[0], cubes[1], CONFIG_CUBE_DIM, CONFIG_SIM_K, CONFIG_SIM_DT);
+
+  // swap cubes
+  double* const tmp = cubes[0];
+  cubes[0] = cubes[1];
+  cubes[1] = tmp;
 }
 
 int main(int ac, char** av)
@@ -60,8 +79,9 @@ int main(int ac, char** av)
   cubes[1] = alloc_cube(CONFIG_CUBE_DIM);
 
   // init and run viewer
+  static const unsigned int dt = (unsigned int)(CONFIG_SIM_DT * 1000);
   SimulationViewer* const viewer =
-    SimulationViewer::makeSimulationViewer(ac, av, step);
+    SimulationViewer::makeSimulationViewer(ac, av, step, dt);
   viewer->show();
   return viewer->execute();
 }

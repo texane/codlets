@@ -114,7 +114,7 @@ QString SimulationViewer::helpString() const
 
 
 SimulationViewer* SimulationViewer::makeSimulationViewer
-(int ac, char** av, void (*onStep)(SimulationViewer*))
+(int ac, char** av, void (*onStep)(SimulationViewer*), unsigned int dt)
 {
   QApplication* const app = new QApplication(ac, av);
   SimulationViewer* const viewer = new SimulationViewer(onStep);
@@ -129,7 +129,7 @@ SimulationViewer* SimulationViewer::makeSimulationViewer
 
   viewer->timer_ = new QTimer(viewer);
   QObject::connect(viewer->timer_, SIGNAL(timeout()), viewer, SLOT(onTimer()));
-  viewer->timer_->start(100);
+  viewer->timer_->start(dt);
 
   return viewer;
 }

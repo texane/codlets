@@ -19,7 +19,7 @@ public:
   int execute();
 
   static SimulationViewer* makeSimulationViewer
-  (int, char**, void (*)(SimulationViewer*));
+  (int, char**, void (*)(SimulationViewer*), unsigned int);
 
 public slots:
   virtual void onTimer() { onStep_(this); }
