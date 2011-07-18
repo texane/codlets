@@ -25,16 +25,10 @@ static void zero_cube(double* cube, unsigned int dim)
     *cube = 0;
 }
 
-static inline unsigned int to_index
-(unsigned int i, unsigned int j, unsigned int k, unsigned int dim)
-{
-  return
-}
-
 static void diffuse_heat
 (
  const double* u, double* uu, unsigned int dim,
- double k, double dt, double dx
+ double k, double dt, double x
 )
 {
   // scube the source cube
@@ -53,7 +47,7 @@ static void diffuse_heat
     for (unsigned int j = 0; j < dim; ++j)
       for (unsigned int k = 0; k < dim; ++k, ++pos)
       {
-	u[pos] =
+	uu[pos] =
 	  c0 * u[pos] + c1 *
 	  (u[pos - dim] + u[pos + 1] + u[pos + dim] + u[pos - 1] + u[pos - ddim] + u[pos + ddim]);
       }
