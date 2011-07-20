@@ -57,7 +57,7 @@ static void midpoint_solve
   if (x0 >= (xn - dh)) return ;
 
   for (; x0 < (xn - dh); x0 += dh, ++y)
-    y[1] = g(x0 + dh / 2 * y[0], 0) * dh + y[0];
+    y[1] = g(x0 + dh / 2 * y[0], y[0]) * dh + y[0];
 }
 
 
@@ -76,10 +76,10 @@ static inline real_type F(real_type x)
 
 int main(int ac, char** av)
 {
-#define CONFIG_X0 1
+#define CONFIG_X0 5
 #define CONFIG_Y0 0.25
 #define CONFIG_DH 0.05
-#define CONFIG_XN 5
+#define CONFIG_XN 10
 
   const unsigned int size = get_buffer_size(CONFIG_X0, CONFIG_XN, CONFIG_DH);
   real_type* const euler_y = (real_type*)malloc(size * sizeof(real_type));

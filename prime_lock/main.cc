@@ -45,11 +45,13 @@ static void lock_acquire(unsigned long k)
 {
   const unsigned long p = key_to_prime(k);
 
+  unsigned long v;
+
  redo_mul:
   // wait for value not to contain p
-  while ((value % p) == 0) ;
+  v = value;
+  if ((v % p) == 0) goto redo_mul;
   // affect and retry on race
-  const unsigned long v = value;
   if (__sync_bool_compare_and_swap(&value, v, p * v)) return ;
   goto redo_mul;
 }
