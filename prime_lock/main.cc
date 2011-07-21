@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+// note: there is no need to actually allocate the prime array.
+// we could only maintain the sieve array as a bitmap, requiring
+// nk / 8 bytes of storage.
+
 __attribute__((aligned(64)))
 static volatile unsigned long value;
 static unsigned long* primes;
