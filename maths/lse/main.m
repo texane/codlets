@@ -2,16 +2,16 @@
 # http://ceee.rice.edu/Books/LA/leastsq/index.html
 
 data = dlmread("dat.csv", " ");
-X = [ones(size(data)(1), 1)'; data(:,1)' ]';
+x = data(:,1);
+X = [ones(size(data)(1), 1)'; x' ]';
 Y = data(:,2);
 
-# solve X' * X * c = X' * y
+# solve the normal eq: X' * X * c = X' * y
 c = (X' * X) \ (X' * Y);
 
 # print the resulting linear equation
 printf("x * %f + %f", c(2), c(1));
 
 # plot results
-x = data(:,1);
-plot(x, data(:,2), x * c(2) + c(1));
+plot(x, Y, '.', x * c(2) + c(1));
 waitforbuttonpress;
