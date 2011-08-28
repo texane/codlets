@@ -201,7 +201,7 @@ static void remove_outliers(std::vector<CvPoint>& points)
   // univariate dataset by computing the mahalanobis
   // distance of every points. a point is considered
   // as an outlier if its distance m[i] is such that:
-  // mean -2 * sd < m[i] < mean + 2 * sd
+  // mean -3 * sd < m[i] < mean + 3 * sd
 
   bool has_erased = true;
   while (has_erased && points.size())
@@ -217,8 +217,8 @@ static void remove_outliers(std::vector<CvPoint>& points)
 
     // standard deviation
     const double sd = sqrt(var);
-    const double min = mean - sd * 2;
-    const double max = mean + sd * 2;
+    const double min = mean - sd * 3;
+    const double max = mean + sd * 3;
 
     has_erased = false;
 
@@ -234,6 +234,7 @@ static void remove_outliers(std::vector<CvPoint>& points)
       }
 
       // printf("remove %d, %d, %lf\n", points[j].x, points[j].y, m[i]);
+
       points.erase(points.begin() + j);
       has_erased = true;
     }
