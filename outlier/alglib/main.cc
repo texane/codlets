@@ -49,6 +49,13 @@ static void gen_outlier(std::vector<CvPoint>& points)
 
 
 // mahalanobis distance
+// foreach point x[i] in the dataset, the mahalanobis distance is
+// m[i] = (x[i] - mean(x))' * inv(cov(x)) * (x[i] - mean(x))
+// intuitively, this formula takes into account the delta of a
+// point from the mean. the delta is weighted by the covariance
+// matrix (its inverse since this is a division). it works since
+// the relation between x and y are assumed to linear (we are trying)
+// to fit a line.
 
 static int mahalanobis
 (const double* a, unsigned int m, unsigned int n, double* dists)
