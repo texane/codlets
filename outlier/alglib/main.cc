@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include <algorithm>
 #include "linalg.h"
 #include "statistics.h"
 
@@ -162,24 +163,99 @@ static int mahalanobis
 }
 
 
+#if 0 // unused
+
+// sort by distance descending order
+
+static inline bool compare_dists
+(std::vector<double>::const_iterator a, std::vector<double>::const_iterator b)
+{
+  return *a > *b;
+}
+
+static void sort
+(const std::vector<double>& dists, std::vector<unsigned int>& map)
+{
+  std::vector< std::vector<double>::const_iterator > its;
+  its.resize(dists.size());
+
+  std::vector<double>::const_iterator pos = dists.begin();
+  for (unsigned int i = 0; i < dists.size(); ++i, ++pos)
+    its[i] = pos;
+
+  std::sort(its.begin(), its.end(), compare_dists);
+
+  map.resize(dists.size());
+  for (unsigned int i = 0; i < its.size(); ++i)
+    map[i] = its[i] - dists.begin();
+}
+
+#endif // unused
+
+
+// outliers removal
+
+static void remove_outliers(std::vector<CvPoint>& points)
+{
+  bool has_erased = true;
+  while (has_erased && points.size())
+  {
+    std::vector<double> m;
+    mahalanobis(points, m);
+
+    // compute the variance
+    alglib::real_1d_array tmp;
+    tmp.setcontent(m.size(), (const double*)&m[0]);
+    double mean, var, skew, kurt;
+    alglib::samplemoments(tmp, mean, var, skew, kurt);
+
+    // standard deviation
+    const double sd = sqrt(var);
+    const double min = mean - sd * 2;
+    const double max = mean + sd * 2;
+
+    has_erased = false;
+
+    // track the actual position as points are deleted
+    unsigned int j = 0;
+
+    for (unsigned int i = 0; i < m.size(); ++i)
+    {
+      if ((m[i] >= min) && (m[i] < max))
+      {
+	++j;
+	continue;
+      }
+
+      // printf("remove %d, %d, %lf\n", points[j].x, points[j].y, m[i]);
+      points.erase(points.begin() + j);
+      has_erased = true;
+    }
+  }
+}
+
+
 int main(int ac, char** av)
 {
   std::vector<CvPoint> points;
-  std::vector<double> m;
 
   gen_linear(points);
   gen_outlier(points);
+  remove_outliers(points);
 
 #if 0
   printf("x = [ ");
   for (unsigned int i = 0; i < points.size(); ++i)
     printf("%c %d %d", i ? ';' : ' ', points[i].x, points[i].y);
-  printf("]\n");
+  printf("];\n");
 #endif
 
-  mahalanobis(points, m);
+#if 0
+  for (unsigned int i = 0; i < map.size(); ++i)
+    printf("%d, %d, %lf\n", points[map[i]].x, points[map[i]].y, m[map[i]]);
+#endif
 
-#if 1
+#if 0
   for (unsigned int i = 0; i < points.size(); ++i)
     printf("%d, %d, %lf\n", points[i].x, points[i].y, m[i]);
 #endif
