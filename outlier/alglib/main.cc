@@ -197,6 +197,12 @@ static void sort
 
 static void remove_outliers(std::vector<CvPoint>& points)
 {
+  // points are multivariate data. we reduce it to an
+  // univariate dataset by computing the mahalanobis
+  // distance of every points. a point is considered
+  // as an outlier if its distance m[i] is such that:
+  // mean -2 * sd < m[i] < mean + 2 * sd
+
   bool has_erased = true;
   while (has_erased && points.size())
   {
