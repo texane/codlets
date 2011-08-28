@@ -23,7 +23,7 @@ static void gen_linear(std::vector<CvPoint>& points)
 
     CvPoint point;
     point.x = x - 3 + (rand() % 6);
-    point.y = m * (double)x + p -3 + (rand() % 6);
+    point.y = m * (double)x + p - 3 + (rand() % 6);
     points.push_back(point);
   }
 }
@@ -68,7 +68,7 @@ static int mahalanobis
     // todo: move outside the loop
     alglib::real_1d_array tmp;
     tmp.setlength(m);
-    for (unsigned int j = 0; j < m; ++j) tmp[i] = a[i * n + i];
+    for (unsigned int j = 0; j < m; ++j) tmp[j] = a[j * n + i];
 
     // compute moments
     double var, skew, kurt;
@@ -101,23 +101,23 @@ static int mahalanobis
 
   // x[i] - mu vector
   alglib::real_2d_array diff;
-  diff.setlength(1, n);
+  diff.setlength(n, 1);
 
   for (unsigned int i = 0; i < m; ++i)
   {
     // compute x[i] - mu
     for (unsigned int j = 0; j < n; ++j)
-      diff(0, j) = x(i, j) - mu[j];
+      diff(j, 0) = x(i, j) - mu[j];
 
     static const alglib::ae_int_t nop = 0;
     static const alglib::ae_int_t transpose = 1;
 
     // tmp = (x[i] - mu)' * inv(cov)
     alglib::real_2d_array tmp;
-    tmp.setlength(n, invcov.cols());
+    tmp.setlength(1, invcov.cols());
     alglib::rmatrixgemm
     (
-     diff.rows(), invcov.cols(), diff.cols(), 1,
+     diff.cols(), invcov.cols(), invcov.rows(), 1,
      diff, 0, 0, transpose,
      invcov, 0, 0, nop,
      0, tmp, 0, 0
@@ -125,7 +125,7 @@ static int mahalanobis
 
     // res = tmp * (x[i] - mu)
     alglib::real_2d_array res;
-    res.setlength(tmp.rows(), diff.cols());
+    res.setlength(tmp.rows(), 1);
     alglib::rmatrixgemm
     (
      tmp.rows(), diff.cols(), tmp.cols(), 1,
@@ -134,7 +134,7 @@ static int mahalanobis
      0, res, 0, 0
     );
 
-    dists[i] = res(0, i);
+    dists[i] = res(0, 0);
   }
 
   return 0;
@@ -179,9 +179,9 @@ int main(int ac, char** av)
 
   mahalanobis(points, m);
 
-#if 0
+#if 1
   for (unsigned int i = 0; i < points.size(); ++i)
-    printf("(%lf, %lf) -> %lf\n", (double)points[i].x, (double)points[i].y, m[i]);
+    printf("%d, %d, %lf\n", points[i].x, points[i].y, m[i]);
 #endif
 
   return 0;
