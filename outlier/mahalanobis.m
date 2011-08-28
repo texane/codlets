@@ -6,6 +6,5 @@ m = ones(1, size(d)(2));
 for i = [1:size(d)(2)]
   m(i) = d(:,i)' * invcov * d(:,i);
 end
-m'
-%[i, j] = sort(m);
+% [i, j] = sort(m);
 % [ x(j,:) m'(j) ]
