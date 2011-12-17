@@ -3,9 +3,9 @@
 gcc \
 -Wall \
 -I. \
-`pkg-config --cflags sdl` \
+`pkg-config --cflags SDL_gfx` \
 main.c \
 x.c \
 -lm \
-`pkg-config --libs sdl` \
+`pkg-config --libs SDL_gfx` \
 -lSDL_draw

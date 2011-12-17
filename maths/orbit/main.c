@@ -32,7 +32,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <math.h>
+#include "x.h"
 
 
 static const char* dtos(double d)
@@ -277,6 +279,91 @@ static inline double rtod(double r)
 }
 
 
+static const unsigned char red_rgb[] = { 0xff, 0, 0 };
+const x_color_t* red_col = NULL;
+
+struct info
+{
+  double x;
+  double y;
+  double d0;
+  double d1;
+  double a;
+};
+
+static int on_event(const struct x_event* ev, void* p)
+{
+  switch (x_event_get_type(ev))
+  {
+  case X_EVENT_KDOWN_SPACE:
+    break;
+
+  case X_EVENT_KDOWN_LEFT:
+    break;
+
+  case X_EVENT_KDOWN_RIGHT:
+    break;
+
+  case X_EVENT_KDOWN_UP:
+    break;
+
+  case X_EVENT_KDOWN_DOWN:
+    break;
+
+  case X_EVENT_TICK:
+    {
+      struct info* const i = p;
+
+      const int w = x_get_width();
+      const int h = x_get_height();
+
+      x_draw_ellipse
+      (
+       x_get_screen(),
+       w / 2, h / 2,
+       i->d0 * 20,
+       i->d1 * 20,
+       i->a,
+       red_col
+      );
+    }
+    break;
+
+  case X_EVENT_QUIT:
+    x_cleanup();
+    exit(-1);
+    break;
+
+  default:
+    break;
+  }
+
+  return 0;
+}
+
+static void draw_ellipse
+(
+ double x,
+ double y,
+ double d0,
+ double d1,
+ double a
+)
+{
+  struct info i;
+
+  x_initialize(CONFIG_TICK_MS);
+  x_alloc_color(red_rgb, &red_col);
+  i.x = x;
+  i.y = y;
+  i.d0 = d0;
+  i.d1 = d1;
+  i.a = a;
+  x_loop(on_event, &i);
+  x_cleanup();
+}
+
+
 int main(int ac, char** av)
 {
   double points[] =
@@ -338,6 +425,7 @@ int main(int ac, char** av)
       printf("not an ellipse\n");
     else
       printf("(%lf, %lf) (%lf, %lf) %lf\n", _x, _y, major, minor, rtod(alpha));
+    draw_ellipse(_x, _y, major, minor, rtod(alpha));
   }
 
   free(a);

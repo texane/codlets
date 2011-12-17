@@ -54,7 +54,7 @@ void x_draw_hline(x_surface_t*, int, int, int, const x_color_t*);
 void x_draw_square(x_surface_t*, int, int, int, const x_color_t*);
 void x_draw_circle(x_surface_t*, int, int, int, const x_color_t*);
 void x_draw_disk(x_surface_t*, int, int, int, const x_color_t*);
-void x_draw_ellipse(x_surface_t*, int, int, int, int, const x_color_t*);
+void x_draw_ellipse(x_surface_t*, int, int, int, int, double, const x_color_t*);
 int x_event_get_type(const struct x_event*);
 int x_get_width(void);
 int x_get_height(void);

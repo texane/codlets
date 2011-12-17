@@ -11,9 +11,11 @@
 # include <memory.h>
 # include <SDL.H>
 # include <SDL_draw.h>
+# include <SDL_rotozoom.h>
 #else // __linux__
 # include <SDL/SDL.h>
 # include <SDL/SDL_draw.h>
+# include <SDL/SDL_rotozoom.h>
 #endif // _WIN32
 #include "x.h"
 
@@ -589,9 +591,37 @@ void x_draw_disk
 
 
 void x_draw_ellipse
-(x_surface_t* s, int x, int y, int rad0, int rad1, const x_color_t* c)
+(x_surface_t* s, int x, int y, int d0, int d1, double a, const x_color_t* c)
 {
-  Draw_Ellipse(s, x, y, rad0, rad1, c->value);
+  /* create a temp surface then blit into s */
+
+  SDL_Surface* es;
+  SDL_Surface* rs = NULL;
+  SDL_Rect pos;
+
+  es = SDL_CreateRGBSurface(SDL_SWSURFACE, d0, d1, 16, 0, 0, 0, 0);
+  if (es == NULL) printf("invalid surface\n");
+
+  SDL_SetColorKey(es, SDL_SRCCOLORKEY, pink_color->value);
+  SDL_SetAlpha(es, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
+  SDL_FillRect(es, NULL, pink_color->value);
+  Draw_Ellipse(es, d0 / 2, d1 / 2, d0 / 2, d1 / 2, c->value);
+
+  if (a)
+  {
+    rs = rotozoomSurface(es, a, 1.0, SMOOTHING_OFF);
+    SDL_SetColorKey(rs, SDL_SRCCOLORKEY, pink_color->value);
+    SDL_SetAlpha(es, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
+  }
+
+  pos.x = x;
+  pos.y = y;
+
+  if (rs != NULL) SDL_BlitSurface(rs, NULL, s, &pos);
+  else SDL_BlitSurface(es, NULL, s, &pos);
+
+  SDL_FreeSurface(es);
+  if (rs != NULL) SDL_FreeSurface(rs);
 }
 
 
