@@ -30,6 +30,7 @@
 
    ephemeris references:
    http://www.cv.nrao.edu/~rfisher/Ephemerides/ephem_use.html
+   http://www.cv.nrao.edu/~rfisher/Ephemerides/ephem_descr.html
  */
 
 
