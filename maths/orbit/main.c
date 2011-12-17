@@ -14,10 +14,19 @@
    with Cij = (-1)^(i + j) * Mij
    where Mij the minor of Aij, ie. the determinant of the matrix A prived of
    row i and col j.
+   Thus, given row 1 is chosen, the recursive relation is:
+   det(A) = sum(-1^j * a1j * det(M1j))
 
    ellipse explicit form:
    http://gilles.dubois10.free.fr/analyse_reelle/contimplicite.html
    x^2 / a^2 + y^2 / b^2 - 1 = 0
+   
+   from ellipses.pdf:
+   an eq. of the form:
+   ax^2 + 2bxy + cy^2 + 2dx + 2ey + f = 0
+   defines an ellipses iif:
+   ac - b^2 > 0 and
+   (bd - ae)^2 - (d^2 - af)(b^2 - ac) > 0
  */
 
 
