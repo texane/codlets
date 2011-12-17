@@ -27,6 +27,9 @@
    defines an ellipses iif:
    ac - b^2 > 0 and
    (bd - ae)^2 - (d^2 - af)(b^2 - ac) > 0
+
+   ephemeris references:
+   http://www.cv.nrao.edu/~rfisher/Ephemerides/ephem_use.html
  */
 
 
