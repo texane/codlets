@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 
 static const char* dtos(double d)
@@ -154,6 +155,92 @@ static void expand_cofactor
 }
 
 
+static int get_ellipse_from_quadratic
+(
+ const double* p,
+ double* x,
+ double* y,
+ double* major,
+ double* minor,
+ double* alpha
+)
+{
+  /* http://mathworld.wolfram.com/Ellipse.html
+     p the quadratic polynomial coefficients
+     x, y  the ellipse center
+     major, minor the axis lenghts
+     alpha the ellipse rotation
+     return -1 if the this is not an ellipse
+   */
+
+  const double a = p[0];
+  const double b = p[1] / 2;
+  const double c = p[2];
+  const double d = p[3] / 2;
+  const double f = p[4] / 2;
+  const double g = p[5];
+
+  const double bb = b * b;
+  const double dd = d * d;
+  const double ff = f * f;
+  const double bbac = bb - a * c;
+
+  double m[3 * 3];
+  double detm;
+  const int cols[3] = { 0, 1, 2 };
+
+  double q;
+
+  /* check it is an ellipse */
+
+  m[0 * 3 + 0] = a;
+  m[0 * 3 + 1] = b;
+  m[0 * 3 + 2] = d;
+  m[1 * 3 + 0] = b;
+  m[1 * 3 + 1] = c;
+  m[1 * 3 + 2] = f;
+  m[2 * 3 + 0] = d;
+  m[2 * 3 + 1] = f;
+  m[2 * 3 + 2] = g;
+  detm = det(cols, m, 3, 3);
+
+  if (detm == 0) return -1;
+  if (detm / (a + c) >= 0) return -1;
+
+  m[0 * 2 + 0] = a;
+  m[0 * 2 + 1] = b;
+  m[1 * 2 + 0] = b;
+  m[1 * 2 + 1] = c;
+  if (det(cols, m, 2, 2) <= 0) return -1;
+
+  /* center */
+
+  *x = (c * d - b * f) / bbac;
+  *y = (a * f - b * d) / bbac;
+
+  /* axis lengths */
+
+  q = a * ff + c * dd + g * bb  - 2 * b * d * f - a * c * g;
+  *minor = sqrt( (2 * q) / ( bbac * ( +1 * sqrt(pow(a - c, 2) + 4 * bb) - (a + c)) ) );
+  *major = sqrt( (2 * q) / ( bbac * ( -1 * sqrt(pow(a - c, 2) + 4 * bb) - (a + c)) ) );
+
+  /* compute alpha */
+
+  if (b == 0)
+  {
+    if (a < c) *alpha = 0;
+    else *alpha = M_PI / 2;
+  }
+  else
+  {
+    *alpha = tanh(a - c / (2 * b));
+    if (a > c) *alpha += M_PI / 2;
+  }
+
+  return 0;
+}
+
+
 static void points_to_a
 (
  double* a,
@@ -165,7 +252,6 @@ static void points_to_a
 
   int i;
 
-  /* a_0i = { x^2, y^2, xy, x, y} = 1 */
   for (i = 0; i < n; ++i) a[i] = 1;
 
   /* a starts at second line, refer above comment */
@@ -181,6 +267,13 @@ static void points_to_a
     a[(i + 1) * n + 4] = y;
     a[(i + 1) * n + 5] = 1;
   }
+}
+
+
+static inline double rtod(double r)
+{
+  /* radians to degrees */
+  return (r * 180) / M_PI;
 }
 
 
@@ -236,6 +329,16 @@ int main(int ac, char** av)
   for (i = 0; i < n; ++i)
     printf("%s%lf", i ? " + " : "", x[i]);
   printf("\n");
+
+  {
+    double _x, _y;
+    double major, minor;
+    double alpha;
+    if (get_ellipse_from_quadratic(x, &_x, &_y, &major, &minor, &alpha))
+      printf("not an ellipse\n");
+    else
+      printf("(%lf, %lf) (%lf, %lf) %lf\n", _x, _y, major, minor, rtod(alpha));
+  }
 
   free(a);
   free(x);
