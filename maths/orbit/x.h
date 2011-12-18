@@ -39,6 +39,7 @@ typedef SDL_Surface x_surface_t;
 #define X_EVENT_KDOWN_RIGHT 5
 #define X_EVENT_KDOWN_UP 6
 #define X_EVENT_KDOWN_DOWN 7
+#define X_EVENT_MOUSE_BUTTON 8
 
 
 int x_initialize(unsigned int);
@@ -54,8 +55,9 @@ void x_draw_hline(x_surface_t*, int, int, int, const x_color_t*);
 void x_draw_square(x_surface_t*, int, int, int, const x_color_t*);
 void x_draw_circle(x_surface_t*, int, int, int, const x_color_t*);
 void x_draw_disk(x_surface_t*, int, int, int, const x_color_t*);
-void x_draw_ellipse(x_surface_t*, int, int, int, int, double, const x_color_t*);
+void x_draw_ellipse(x_surface_t*, int, int, int, int, int, int, double, const x_color_t*);
 int x_event_get_type(const struct x_event*);
+void x_event_get_xy(const struct x_event*, int*, int*);
 int x_get_width(void);
 int x_get_height(void);
 const x_color_t* x_get_transparency_color(void);

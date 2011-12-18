@@ -227,8 +227,8 @@ static int get_ellipse_from_quadratic
   /* axis lengths */
 
   q = a * ff + c * dd + g * bb  - 2 * b * d * f - a * c * g;
-  *minor = sqrt( (2 * q) / ( bbac * ( +1 * sqrt(pow(a - c, 2) + 4 * bb) - (a + c)) ) );
-  *major = sqrt( (2 * q) / ( bbac * ( -1 * sqrt(pow(a - c, 2) + 4 * bb) - (a + c)) ) );
+  *minor = 2 * sqrt( (2 * q) / ( bbac * ( +1 * sqrt(pow(a - c, 2) + 4 * bb) - (a + c)) ) );
+  *major = 2 * sqrt( (2 * q) / ( bbac * ( -1 * sqrt(pow(a - c, 2) + 4 * bb) - (a + c)) ) );
 
   /* compute alpha */
 
@@ -293,6 +293,9 @@ struct info
   double d0;
   double d1;
   double a;
+
+  const double* points;
+  int npoints;
 };
 
 static int on_event(const struct x_event* ev, void* p)
@@ -314,6 +317,53 @@ static int on_event(const struct x_event* ev, void* p)
   case X_EVENT_KDOWN_DOWN:
     break;
 
+  case X_EVENT_MOUSE_BUTTON:
+    {
+      static int ibutton = 0;
+      static double buttons[5 * 2];
+      const int w = x_get_width();
+      const int h = x_get_height();
+      int posx, posy;
+      x_event_get_xy(ev, &posx, &posy);
+      buttons[ibutton * 2 + 0] = posx - w / 2;
+      buttons[ibutton * 2 + 1] = posy - h / 2;
+
+      if (((++ibutton) % 5) == 0)
+      {
+	static const int npoints = 5;
+
+	struct info* const i = p;
+	ibutton = 0;
+
+	double* a;
+	double* x;
+	int n;
+
+	n = npoints + 1;
+	a = malloc(n * n * sizeof(double));
+	x = malloc(n * sizeof(double));
+	points_to_a(a, buttons, npoints);
+	expand_cofactor(x, a, n);
+
+	double _x, _y;
+	double major, minor;
+	double alpha;
+	if (get_ellipse_from_quadratic(x, &_x, &_y, &major, &minor, &alpha))
+	{
+	  printf("not an ellipse\n");
+	  break ;
+	}
+
+	i->x = _x;
+	i->y = _y;
+	i->d0 = major;
+	i->d1 = minor;
+	i->a = alpha;
+	i->points = buttons;
+	i->npoints = npoints;
+      }
+    }
+
   case X_EVENT_TICK:
     {
       struct info* const i = p;
@@ -321,15 +371,41 @@ static int on_event(const struct x_event* ev, void* p)
       const int w = x_get_width();
       const int h = x_get_height();
 
+      int j;
+
       x_draw_ellipse
       (
        x_get_screen(),
-       w / 2, h / 2,
-       i->d0 * 20,
-       i->d1 * 20,
+       w / 2,
+       h / 2,
+#if 0
+       i->x * 10,
+       i->y * 10,
+       i->d0 * 10,
+       i->d1 * 10,
+#else
+       i->x,
+       i->y,
+       i->d0,
+       i->d1,
+#endif
        i->a,
        red_col
       );
+
+      for (j = 0; j < i->npoints; ++j)
+      {
+#if 0
+	const double x = w / 2 + i->points[j * 2 + 0] * 10;
+	const double y = h / 2 + i->points[j * 2 + 1] * 10;
+#else
+	const double x = w / 2 + i->points[j * 2 + 0];
+	const double y = h / 2 + i->points[j * 2 + 1];
+#endif
+	x_draw_circle(x_get_screen(), x, y, 5, red_col);
+      }
+
+      x_draw_circle(x_get_screen(), w / 2, h / 2, 5, red_col);
     }
     break;
 
@@ -351,10 +427,19 @@ static void draw_ellipse
  double y,
  double d0,
  double d1,
- double a
+ double a,
+ const double* points,
+ int npoints
 )
 {
   struct info i;
+
+  if (d1 > d0)
+  {
+    const double tmp = d1;
+    d1 = d0;
+    d0 = tmp;
+  }
 
   x_initialize(CONFIG_TICK_MS);
   x_alloc_color(red_rgb, &red_col);
@@ -363,6 +448,8 @@ static void draw_ellipse
   i.d0 = d0;
   i.d1 = d1;
   i.a = a;
+  i.points = points;
+  i.npoints = npoints;
   x_loop(on_event, &i);
   x_cleanup();
 }
@@ -429,7 +516,7 @@ int main(int ac, char** av)
       printf("not an ellipse\n");
     else
       printf("(%lf, %lf) (%lf, %lf) %lf\n", _x, _y, major, minor, rtod(alpha));
-    draw_ellipse(_x, _y, major, minor, rtod(alpha));
+    draw_ellipse(_x, _y, major, minor, rtod(alpha), points, npoints);
   }
 
   free(a);

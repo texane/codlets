@@ -32,6 +32,8 @@ struct x_color
 struct x_event
 {
   int type;
+  int x;
+  int y;
 };
 
 
@@ -213,6 +215,15 @@ void x_loop(int (*on_event)(const struct x_event*, void*), void* ctx)
 	      }
 
 	    break;
+	  }
+
+	case SDL_MOUSEBUTTONDOWN:
+	  {
+	    x_event.type = X_EVENT_MOUSE_BUTTON;
+	    x_event.x = event.button.x;
+	    x_event.y = event.button.y;
+	    on_event(&x_event, ctx);
+	    break ;
 	  }
 
 	case SDL_QUIT:
@@ -591,7 +602,7 @@ void x_draw_disk
 
 
 void x_draw_ellipse
-(x_surface_t* s, int x, int y, int d0, int d1, double a, const x_color_t* c)
+(x_surface_t* s, int sx, int sy, int x, int y, int d0, int d1, double a, const x_color_t* c)
 {
   /* create a temp surface then blit into s */
 
@@ -599,13 +610,15 @@ void x_draw_ellipse
   SDL_Surface* rs = NULL;
   SDL_Rect pos;
 
-  es = SDL_CreateRGBSurface(SDL_SWSURFACE, d0, d1, 16, 0, 0, 0, 0);
+  static const int dim = 200;
+
+  es = SDL_CreateRGBSurface(SDL_SWSURFACE, dim, dim, 16, 0, 0, 0, 0);
   if (es == NULL) printf("invalid surface\n");
 
   SDL_SetColorKey(es, SDL_SRCCOLORKEY, pink_color->value);
   SDL_SetAlpha(es, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
   SDL_FillRect(es, NULL, pink_color->value);
-  Draw_Ellipse(es, d0 / 2, d1 / 2, d0 / 2, d1 / 2, c->value);
+  Draw_Ellipse(es, dim / 2, dim / 2, d0 / 2, d1 / 2, c->value);
 
   if (a)
   {
@@ -614,8 +627,8 @@ void x_draw_ellipse
     SDL_SetAlpha(es, SDL_SRCALPHA, SDL_ALPHA_OPAQUE);
   }
 
-  pos.x = x;
-  pos.y = y;
+  pos.x = sx - dim / 2;
+  pos.y = sy - dim / 2;
 
   if (rs != NULL) SDL_BlitSurface(rs, NULL, s, &pos);
   else SDL_BlitSurface(es, NULL, s, &pos);
@@ -628,6 +641,13 @@ void x_draw_ellipse
 int x_event_get_type(const struct x_event* event)
 {
   return event->type;
+}
+
+
+void x_event_get_xy(const struct x_event* ev, int* x, int* y)
+{
+  *x = ev->x;
+  *y = ev->y;
 }
 
 
